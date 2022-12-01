@@ -53,7 +53,7 @@ impl Game {
             });
         }
         tiles.shuffle(&mut thread_rng());
-        let mut players = vec![Player::new(), Player::new(), Player::new(), Player::new()];
+        let players = vec![Player::new(), Player::new(), Player::new(), Player::new()];
         Game {
             tile_pile: TilePile {
                 discards: Vec::new(),

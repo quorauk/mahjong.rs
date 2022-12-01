@@ -1,5 +1,5 @@
 use crate::mahjong_v2::game::Tile;
-use std::cmp::{max, min};
+use std::cmp::min;
 
 #[derive(Clone, Copy, Debug)]
 pub enum Meld {

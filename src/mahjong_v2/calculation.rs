@@ -1,8 +1,6 @@
 use crate::mahjong_v2::game::Tile;
-use crate::mahjong_v2::player::ClosedHand;
 use crate::mahjong_v2::tile::{Meld, Protorun};
 use std::cmp::Ordering;
-use std::convert::From;
 use std::mem::discriminant;
 
 #[derive(Debug)]
@@ -155,17 +153,17 @@ fn remove_protorun(tiles: &mut Vec<Tile>, protorun: Protorun) {
             }
         }
         Protorun::Closed(a, b) => {
-            for tile in [a, a, a] {
+            for tile in [a, b] {
                 remove_tile(tiles, tile)
             }
         }
         Protorun::Edge(a, b) => {
-            for tile in [a, a, a] {
+            for tile in [a, b] {
                 remove_tile(tiles, tile)
             }
         }
-        Protorun::Pair(a, b) => {
-            for tile in [a, a, a] {
+        Protorun::Pair(a, _) => {
+            for tile in [a, a] {
                 remove_tile(tiles, tile)
             }
         }

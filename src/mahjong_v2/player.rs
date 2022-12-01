@@ -1,5 +1,5 @@
 use crate::mahjong_v2::calculation::ProvisionalHand;
-use crate::mahjong_v2::game::{Tile, TilePile};
+use crate::mahjong_v2::game::{Tile};
 
 pub struct Player {
     hand: ClosedHand,
@@ -55,22 +55,5 @@ impl Player {
             }
         }
         return TurnState::None;
-    }
-}
-
-struct HandCalculator {}
-
-impl HandCalculator {
-    pub fn tile_values(hand: ClosedHand) -> Vec<(Tile, i32)> {
-        let mut dedup_tiles = hand.tiles.clone();
-        dedup_tiles.dedup_by(|a, b| *a == *b);
-        dedup_tiles
-            .iter()
-            .map(|tile| match tile {
-                Tile::Suit(_, _) => (*tile, 5),
-                Tile::Dragon(_) => (*tile, 0),
-                Tile::Wind(_) => (*tile, 0),
-            })
-            .collect()
     }
 }
