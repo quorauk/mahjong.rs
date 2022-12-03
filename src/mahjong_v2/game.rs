@@ -1,4 +1,4 @@
-use std::{collections::HashMap, vec};
+
 use std::hash::Hash;
 
 use crate::mahjong_v2::player::{MahjongPlayer, Player};
@@ -127,7 +127,8 @@ impl Game {
                 }
             }
         }
-        self.tile_pile.discard(tile);
+        let current_player = self.players.iter_mut().find(|x| x.wind == self.current_round).unwrap();
+        current_player.discards.push(tile);
         GameTurnState::None
     }
 
