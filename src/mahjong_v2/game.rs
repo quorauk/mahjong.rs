@@ -1,12 +1,15 @@
-use crate::mahjong_v2::player::Player;
+use std::{collections::HashMap, vec};
+use std::hash::Hash;
+
+use crate::mahjong_v2::player::{MahjongPlayer, Player};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use super::player::TurnState;
+use crate::mahjong_v2::player::{DiscardState, TurnState};
 
-#[derive(EnumIter, Clone, Copy, PartialEq, Debug)]
+#[derive(EnumIter, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Wind {
     North,
     East,
@@ -37,7 +40,21 @@ pub enum Tile {
 
 pub struct Game {
     tile_pile: TilePile,
-    players: Vec<Player>,
+    // players: HashMap<Wind, Player>,
+    players: Vec<PlayerState>,
+    current_round: Wind,
+}
+
+struct PlayerState {
+    player: Player,
+    wind: Wind,
+    discards: Vec<Tile>
+}
+
+impl PlayerState {
+    fn new(wind: Wind) -> Self {
+        PlayerState { player: Player::new(), wind: wind, discards: Vec::new() }
+    }
 }
 
 impl Game {
@@ -53,31 +70,74 @@ impl Game {
             });
         }
         tiles.shuffle(&mut thread_rng());
-        let players = vec![Player::new(), Player::new(), Player::new(), Player::new()];
+        let players : Vec<PlayerState> = Wind::iter().map ( |w| PlayerState::new(w) ).collect();
         Game {
             tile_pile: TilePile {
                 discards: Vec::new(),
                 tiles: tiles,
             },
-            players: players,
+            players,
+            current_round: Wind::East,
         }
     }
 
     pub fn run(&mut self) {
         while self.tile_pile.has_tiles() {
-            for player in self.players.iter_mut() {
-                if let Some(tile) = self.tile_pile.draw() {
-                    match player.turn(tile) {
-                        TurnState::Tsumo => {
-                            println!("PLAYER WINS");
-                            return;
-                        }
-                        TurnState::Discard(tile) => self.tile_pile.discard(tile),
-                        TurnState::None => (),
+            match self.turn() {
+                GameTurnState::Win(wind) => {
+                    println!("{:?} wins", wind);
+                    return;
+                }
+                _ => (),
+            }
+        }
+        println!("Exhaustive Draw");
+    }
+
+    fn turn(&mut self) -> GameTurnState {
+        let player_state = self.players.iter_mut().find(|x| x.wind == self.current_round).unwrap();
+        if let Some(tile) = self.tile_pile.draw() {
+            match player_state.player.turn(tile) {
+                TurnState::Tsumo => {
+                    println!("We got a tsumo from {:?}", self.current_round);
+                    return GameTurnState::Win(self.current_round);
+                }
+                TurnState::Discard(tile) => {
+                    if let GameTurnState::Win(wind) = self.handle_discard(tile) {
+                        return GameTurnState::Win(wind);
+                    }
+                }
+                TurnState::None => (),
+            }
+        }
+
+        self.progress_round();
+        return GameTurnState::None;
+    }
+
+    fn handle_discard(&mut self, tile: Tile) -> GameTurnState {
+        for player_state in &mut self.players {
+            if player_state.wind != self.current_round {
+                match player_state.player.offer_discard(tile) {
+                    DiscardState::None => (),
+                    DiscardState::Ron => {
+                        println!("We got a ron from {:?}", player_state.wind);
+                        return GameTurnState::Win(player_state.wind);
                     }
                 }
             }
         }
+        self.tile_pile.discard(tile);
+        GameTurnState::None
+    }
+
+    fn progress_round(&mut self) {
+        self.current_round = match self.current_round {
+            Wind::East => Wind::North,
+            Wind::North => Wind::West,
+            Wind::West => Wind::South,
+            Wind::South => Wind::East,
+        };
     }
 }
 
@@ -98,4 +158,9 @@ impl TilePile {
     pub fn has_tiles(&self) -> bool {
         !self.tiles.is_empty()
     }
+}
+
+enum GameTurnState {
+    None,
+    Win(Wind),
 }

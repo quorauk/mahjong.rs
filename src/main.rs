@@ -19,6 +19,8 @@ mod mahjong_v2;
 use mahjong_v2::game::Game;
 
 fn main() {
-    let mut game = Game::new();
-    game.run()
+    for _ in 1..20 {
+        let mut game = Game::new();
+        game.run()
+    }
 }
